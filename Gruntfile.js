@@ -9,7 +9,7 @@ module.exports = function(grunt) {
         src: ["src/client/**/*.ts"],
         dest: "src/static/bundle.js",
 				options: {
-					module: 'commonjs',
+					module: 'amd',
 					target: 'es5',
 					sourceMap: true,
 					declaration: true,
