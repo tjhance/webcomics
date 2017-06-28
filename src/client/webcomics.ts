@@ -69,8 +69,10 @@ class ComicPage {
 			}
       if (dir === 'self' || dir === 'next') {
         this.addNext(result);
+        this.maybePopFront();
       } else {
         this.addPrev(result);
+        this.maybePopBack();
       }
 
       setTimeout(() => this.attempt(), 0);
@@ -165,7 +167,42 @@ class ComicPage {
     const elem = this.makeElement(info);
     this.buffer.unshift(info);
     this.cur++;
-    this.root.insertBefore(elem, this.root.firstChild);
+    this.preservePosition(() => {
+      this.root.insertBefore(elem, this.root.firstChild);
+    });
+  }
+
+  static NUM_BEFORE_POPPING = 15;
+
+  maybePopFront() {
+    if (this.cur > ComicPage.NUM_BEFORE_POPPING) {
+      this.preservePosition(() => {
+        while (this.cur > ComicPage.NUM_BEFORE_POPPING) {
+          this.buffer.shift();
+          this.cur--;
+          this.root.removeChild(this.root.firstChild as HTMLElement);
+        }
+      });
+    }
+  }
+
+  maybePopBack() {
+    while (this.cur < this.buffer.length - ComicPage.NUM_BEFORE_POPPING) {
+      this.buffer.pop();
+      this.root.removeChild(this.root.lastChild as HTMLElement);
+    }
+  }
+
+  preservePosition(fn: () => void) {
+    const lastChild = this.root.lastChild;
+    if (lastChild) {
+      const offsetTop1 = (lastChild as HTMLElement).offsetTop;
+      fn();
+      const offsetTop2 = (lastChild as HTMLElement).offsetTop;
+      window.scrollBy(0, offsetTop2 - offsetTop1);
+    } else {
+      fn();
+    }
   }
 
   makeLink(url: string) {
@@ -234,7 +271,10 @@ class ComicPage {
       }
 		}
 
-    this.cur = lo;
+    if (this.cur !== lo) {
+      this.cur = lo;
+      this.updateUrl();
+    }
   }
 
   last_known_scroll_position = 0;
@@ -251,6 +291,27 @@ class ComicPage {
       }
       this.ticking = true;
     });
+  }
+
+  updateUrl() {
+    let key = null;
+    if (0 < this.cur && this.cur < this.buffer.length) {
+      if (this.buffer[this.cur].type === 'comic') {
+        key = (this.buffer[this.cur] as InfoComic).key;
+      } else if (this.buffer[this.cur].type === 'startmarker' && this.cur > 0) {
+        key = (this.buffer[this.cur - 1] as InfoComic).key;
+      } else if (this.buffer[this.cur].type === 'endmarker' && this.cur < this.buffer.length - 1) {
+        key = (this.buffer[this.cur + 1] as InfoComic).key;
+      }
+    }
+    if (key == null) {
+      return;
+    }
+
+    window.history.replaceState(key, '',
+        window.location.origin + '/comicview?comic=' +
+        encodeURIComponent(this.comic) + '&index=' + encodeURIComponent(key));
+
   }
 }
 
