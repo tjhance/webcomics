@@ -3,13 +3,13 @@ type Callback<T> = (t: T) => void;
 type InfoEndMarker = {type: 'endmarker'};
 type InfoStartMarker = {type: 'startmarker'};
 type InfoComic = {
-	type: 'comic',
-	url: string,
-	key: string,
-	imgUrl: string,
-	image: HTMLImageElement,
-	width: number,
-	height: number,
+  type: 'comic',
+  url: string,
+  key: string,
+  imgUrl: string,
+  image: HTMLImageElement,
+  width: number,
+  height: number,
 };
 type Info = InfoEndMarker | InfoStartMarker | InfoComic;
 
@@ -23,6 +23,7 @@ class ComicPage {
       public startKey: string) {
     this.root = document.getElementsByClassName('view-container')[0] as HTMLElement;
     this.attempt();
+    this.addScrollHandler();
   }
 
   attemptNum = 0;
@@ -63,7 +64,10 @@ class ComicPage {
       }
       clearTimeout(timeout);
 
-      if (dir == 'self' || dir == 'next') {
+			if (dir === 'self') {
+				this.cur = 0;
+			}
+      if (dir === 'self' || dir === 'next') {
         this.addNext(result);
       } else {
         this.addPrev(result);
@@ -88,7 +92,6 @@ class ComicPage {
       const url = data.url;
       const imgUrl = data.imgUrl;
       const atEnd = data.atEnd;
-      console.log('got', atEnd, key, url, imgUrl);
 
       if (atEnd) {
         if (dir === 'next') {
@@ -211,6 +214,43 @@ class ComicPage {
     }
 
     return div;
+  }
+
+  handleScroll(pos: number) {
+		if (this.buffer.length === 0) {
+		  return;
+		}
+
+		// binary search to see which item is in view
+		// lo <= the answer < hi
+		let lo = 0, hi = this.buffer.length;
+		while (hi > lo + 1) {
+      const mid = (lo + hi) >> 1;
+      const node = this.root.childNodes[mid];
+      if ((node as HTMLElement).offsetTop <= pos) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+		}
+
+    this.cur = lo;
+  }
+
+  last_known_scroll_position = 0;
+  ticking = false;
+
+  addScrollHandler() {
+    window.addEventListener('scroll', (e) => {
+      this.last_known_scroll_position = window.scrollY;
+      if (!this.ticking) {
+        window.requestAnimationFrame(() => {
+          this.handleScroll(this.last_known_scroll_position);
+          this.ticking = false;
+        });
+      }
+      this.ticking = true;
+    });
   }
 }
 

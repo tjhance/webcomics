@@ -1,0 +1,20 @@
+.view-container {
+  text-align: center;
+  font-size: 20px;
+}
+
+.row-elem {
+  padding-bottom: 15px;
+}
+
+.marker-row {
+  font-weight: bold;
+  font-size: 36px;
+}
+
+.comic-row {
+}
+
+.the-comic {
+  padding-top: 20px;
+}
