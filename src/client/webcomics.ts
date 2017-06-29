@@ -10,6 +10,7 @@ type InfoComic = {
   image: HTMLImageElement,
   width: number,
   height: number,
+  isStart: boolean,
 };
 type Info = InfoEndMarker | InfoStartMarker | InfoComic;
 
@@ -66,6 +67,11 @@ class ComicPage {
 
 			if (dir === 'self') {
 				this.cur = 0;
+				// Special-case when you open up to the first comic.
+				// In that case, show the 'startmarker' to begin with.
+				if (result.type === 'comic' && result.isStart) {
+				  this.addNext({type: 'startmarker'});
+				}
 			}
       if (dir === 'self' || dir === 'next') {
         this.addNext(result);
@@ -123,6 +129,7 @@ class ComicPage {
             image: image,
             width: image.width,
             height: image.height,
+            isStart: !!data.isStart,
           });
         });
       }

@@ -166,7 +166,9 @@ export function get_info(req: any, res: any) {
     if (key) {
       comic.keyToUrl(key, (url: string) => {
         comic.keyToImgUrl(key, (imgUrl: string) => {
-          res.send({ key, url, imgUrl, success: true });
+          comic.startKey((startKey: string) => {
+            res.send({ key, url, imgUrl, isStart: key === startKey, success: true });
+          }, err);
         }, err);
       }, err);
     } else {
