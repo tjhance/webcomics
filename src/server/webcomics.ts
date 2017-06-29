@@ -4,6 +4,7 @@ type Callback<T> = (t: T) => void;
 
 interface Webcomic {
   name: string;
+  domain: string;
 
 	startKey: (cb: Callback<string>, err: Callback<string>) => void;
 	endKey: (cb: Callback<string>, err: Callback<string>) => void;
@@ -17,6 +18,7 @@ interface Webcomic {
 
 const girlgenius: Webcomic = {
   name: 'girlgenius',
+  domain: 'girlgeniusonline.com',
 
 	startKey: (cb, err) => {
 	  cb('20021104');
@@ -181,4 +183,42 @@ export function get_info(req: any, res: any) {
   } else {
     comic.adjKey(origKey, dir === 'next', withKey, err);;
   }
+}
+
+export function process_form(req: any, res: any) {
+  const comic_url: string = req.body.comic_url;
+  if (typeof(comic_url) !== 'string') {
+    res.statusCode = 400;
+    res.send("url not given");
+    return;
+  }
+
+  let comic: Webcomic | null = null;
+  for (const key in comics) {
+    const _comic = comics[key];
+    if (comic_url.indexOf(_comic.domain) !== -1) {
+      comic = _comic;
+    }
+  }
+
+  if (!comic) {
+    res.statusCode = 400;
+    res.send("bad url");
+    return;
+  }
+
+  const err = (message: string) => {
+    res.statusCode = 500;
+    res.send(message);
+  };
+
+  comic.urlToKey(comic_url, (key: string | null) => {
+    if (!key) {
+      res.statusCode = 400;
+      res.send("bad url for " + comic!.name);
+    } else {
+      res.redirect("/comicview?comic=" + encodeURIComponent(comic!.name) + "&index=" +
+          encodeURIComponent(key));
+    }
+  }, err);
 }

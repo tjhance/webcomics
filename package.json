@@ -13,6 +13,7 @@
     }
   ],
   "dependencies": {
+    "@types/body-parser": "^1.16.4",
     "@types/express": "^4.0.36",
     "@types/log4js": "0.0.32",
     "body-parser": "^1.17.2",

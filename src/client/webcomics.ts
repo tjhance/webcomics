@@ -204,9 +204,11 @@ class ComicPage {
     const lastChild = this.root.lastChild;
     if (lastChild) {
       const offsetTop1 = (lastChild as HTMLElement).offsetTop;
+      const x = window.pageXOffset;
+      const y = window.pageYOffset;
       fn();
       const offsetTop2 = (lastChild as HTMLElement).offsetTop;
-      window.scrollBy(0, offsetTop2 - offsetTop1);
+      window.scrollTo(x, y + offsetTop2 - offsetTop1);
     } else {
       fn();
     }
@@ -323,5 +325,26 @@ class ComicPage {
 }
 
 (window as any).initApp = function() {
-  (window as any).page = new ComicPage('girlgenius', '20021104');
+  const query = getQuery();
+  const name = query['comic'];
+  const index = query['index'];
+  if (name && index) {
+    (window as any).page = new ComicPage(name, index);
+  } else {
+    window.location.href = '/home';
+  }
 };
+
+function getQuery() {
+	const query = window.location.search.substring(1);
+	const vars = query.split('&');
+	const d: {[name: string]: string} = {};
+	for (var i = 0; i < vars.length; i++) {
+		var split = vars[i].split('=');
+		const name = decodeURIComponent(split[0]);
+		split.shift();
+		const val = decodeURIComponent(split.join('='));
+		d[name] = val;
+	}
+	return d;
+}

@@ -1,6 +1,6 @@
 import express = require('express');
 import morgan = require('morgan');
-//import bodyParser = require('body-parser');
+import bodyParser = require('body-parser');
 import compression = require('compression');
 import http = require('http');
 import webcomics = require('./webcomics');
@@ -11,7 +11,7 @@ export function init(config: any) {
   const app = express();
   app.use(compression());
   app.use(morgan('combined'));
-  //app.use(bodyParser());
+  app.use(bodyParser.urlencoded());
 
   const STATIC_ROOT = __dirname + "/../src/static/"
   console.log('static root is ' + STATIC_ROOT);
@@ -21,8 +21,16 @@ export function init(config: any) {
     sendAppWithData(res, {});
   });
 
+  app.get("/home", (req, res) => {
+    home(req, res);
+  });
+
   app.post("/get_info", (req, res) => {
     webcomics.get_info(req, res);
+  });
+
+  app.post("/process_form", (req, res) => {
+    webcomics.process_form(req, res);
   });
 
   const server = (http as any).Server(app);
@@ -59,6 +67,40 @@ function sendAppWithData(res: any, data: any) {
   const jsonData = JSON.stringify(data);
   const encodedData = encodeURIComponent(jsonData);
   const html = APP_TEMPLATE.replace('REPLACE_ME', encodedData);
+  res.header("Content-Type", "text/html");
+  res.send(html);
+}
+
+function home(req: any, res: any) {
+  const html =
+`<!doctype>
+  <head>
+    <meta charset="utf-8">
+    <title>Infinite Comic</title>
+
+    <!-- stylesheets -->
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
+  </head>
+  <body>
+    <form method="POST" action="/process_form">
+      <div class="home-form-outer">
+        <div class="home-form">
+          <div class="home-form-1">
+            Enter a comic URL.
+          </div>
+          <div class="home-form-2">
+            <input name="comic_url" placeholder="http://www.girlgeniusonline.com/comic.php?date=20021104"
+                class="comic_url_input">
+          </div>
+          <div class="home-form-3">
+            <input type="submit" value="Read!" class="submit_button">
+          </div>
+        </div>
+      </div>
+    </form>
+  </body>
+</html>
+`;
   res.header("Content-Type", "text/html");
   res.send(html);
 }
