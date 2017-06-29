@@ -21,9 +21,8 @@ export function init(config: any) {
     sendAppWithData(res, {});
   });
 
-  app.get("/home", (req, res) => {
-    home(req, res);
-  });
+  app.get("/home", home);
+  app.get("/", home);
 
   app.post("/get_info", (req, res) => {
     webcomics.get_info(req, res);
