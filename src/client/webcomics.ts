@@ -18,6 +18,9 @@ type ImageInfo = {
   height: number,
 };
 
+const SMALL_SCREEN = window.matchMedia &&
+    window.matchMedia('only screen and (max-device-width: 600px)').matches;
+
 class ComicPage {
   buffer: Info[] = [];
   cur = -1;
@@ -244,12 +247,29 @@ class ComicPage {
   }
 
   makeImage(info: ImageInfo) {
+    const div = document.createElement('div');
+    const div2 = document.createElement('div');
+
     const img = document.createElement('img');
     img.setAttribute('width', String(info.width));
     img.setAttribute('height', String(info.height));
     img.setAttribute('src', info.imgUrl);
+
+    // On small screens, we want to expand the image to fit the whole screen.
+    // This is magic styling which the image 100% width, the correct aspect ratio,
+    // even before the image loads (no flicker).
+    // It works because paddingTop is a percentage of the parent node's *width*.
+    if (SMALL_SCREEN) {
+      div.className = 'img-container-small-screen';
+      div.style.paddingTop = (100 * info.height / info.width) + '%';
+      div2.className = 'img-container-inner-small-screen';
+      img.className = 'img-small-screen';
+    }
+
     // TODO alt text?
-    return img;
+    div2.appendChild(img);
+    div.appendChild(div2);
+    return div;
   }
 
   makeElement(info: Info): HTMLElement {
