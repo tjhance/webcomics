@@ -46,7 +46,8 @@ class ComicPage {
       let needsAtEnd = this.buffer[this.buffer.length - 1].type === 'comic' && (this.cur > this.buffer.length - 10);
       let needsAtFront = this.buffer[0].type === 'comic' && this.cur < 10;
       if (needsAtEnd || needsAtFront) {
-        const useFront = needsAtFront && (!needsAtEnd || this.cur * 2 < this.buffer.length);
+        const useFront = needsAtFront && (!needsAtEnd ||
+            (this.cur * 2 < this.buffer.length && this.cur < this.buffer.length - 2));
         if (useFront) {
           dir = 'prev';
           key = (this.buffer[0] as InfoComic).key;
