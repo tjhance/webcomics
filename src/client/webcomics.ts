@@ -6,13 +6,17 @@ type InfoComic = {
   type: 'comic',
   url: string,
   key: string,
+  isStart: boolean,
+  imageInfos: ImageInfo[],
+};
+type Info = InfoEndMarker | InfoStartMarker | InfoComic;
+
+type ImageInfo = {
   imgUrl: string,
   image: HTMLImageElement,
   width: number,
   height: number,
-  isStart: boolean,
 };
-type Info = InfoEndMarker | InfoStartMarker | InfoComic;
 
 class ComicPage {
   buffer: Info[] = [];
@@ -98,7 +102,7 @@ class ComicPage {
       }
       const key = data.key;
       const url = data.url;
-      const imgUrl = data.imgUrl;
+      const imgUrls = data.imgUrls;
       const atEnd = data.atEnd;
 
       if (atEnd) {
@@ -112,23 +116,34 @@ class ComicPage {
       } else {
         if (typeof(key) !== 'string' ||
             typeof(url) !== 'string' ||
-            typeof(imgUrl) !== 'string') {
+            !Array.isArray(imgUrls)) {
           throw new Error('bad result from server');
         }
+        if (imgUrls.length < 1 || imgUrls.length > 2) {
+          throw new Error("bad result from server");
+        }
+        for (const imgUrl of imgUrls) {
+          if (typeof(imgUrl) !== 'string') {
+            throw new Error("bad result from server");
+          }
+        }
 
-        // preload the image
-        this.preloadImage(imgUrl, (image) => {
-          if (!image.width || !image.height) {
-            throw new Error("width and height not present for some reason");
+        // preload the images
+        this.preloadImages(imgUrls, (images: HTMLImageElement[]) => {
+          const imageInfos: ImageInfo[] = [];
+          for (let i = 0; i < imgUrls.length; i++) {
+            const imgUrl = imgUrls[i];
+            const image = images[i];
+            if (!image.width || !image.height) {
+              throw new Error("width and height not present for some reason");
+            }
+            imageInfos.push({imgUrl, image, width: image.width, height: image.height});
           }
           cb({
             type: 'comic',
             url: url,
             key: key,
-            imgUrl: imgUrl,
-            image: image,
-            width: image.width,
-            height: image.height,
+            imageInfos: imageInfos,
             isStart: !!data.isStart,
           });
         });
@@ -143,25 +158,32 @@ class ComicPage {
     oReq.send();
   }
 
-  preloadImage(imgUrl: string, cb: Callback<HTMLImageElement>) {
-    const img = new Image();
-    img.src = imgUrl;
+  preloadImages(imgUrls: string[], cb: Callback<HTMLImageElement[]>) {
+    const imgs = imgUrls.map((imgUrl) => {
+      const img = new Image();
+      img.src = imgUrl;
+      return img;
+    });
 
-    let complete = false;
-
-    img.onload = () => {
-      if (!complete) {
-        complete = true;
-        cb(img);
+    let done = false;
+    const ifCompleteThenCallCb = () => {
+      if (done) {
+        return;
       }
+      for (const img of imgs) {
+        if (!img.complete) {
+          return false;
+        }
+      }
+      done = true;
+      cb(imgs);
     };
 
-    if (img.complete) {
-      if (!complete) {
-        complete = true;
-        cb(img);
-      }
+    for (const img of imgs) {
+      img.onload = ifCompleteThenCallCb;
     }
+
+    ifCompleteThenCallCb();
   }
 
   addNext(info: Info) {
@@ -221,7 +243,7 @@ class ComicPage {
     return a;
   }
 
-  makeImage(info: InfoComic) {
+  makeImage(info: ImageInfo) {
     const img = document.createElement('img');
     img.setAttribute('width', String(info.width));
     img.setAttribute('height', String(info.height));
@@ -248,7 +270,9 @@ class ComicPage {
       div1.appendChild(this.makeLink(info.url));
       div2.appendChild(this.makeLink(window.location.origin + '/comicview?comic=' +
           encodeURIComponent(this.comic) + '&index=' + encodeURIComponent(info.key)));
-      div3.appendChild(this.makeImage(info));
+      for (const imageInfo of info.imageInfos) {
+        div3.appendChild(this.makeImage(imageInfo));
+      }
 
       div.appendChild(div1);
       div.appendChild(div2);

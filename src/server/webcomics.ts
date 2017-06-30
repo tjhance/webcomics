@@ -12,7 +12,7 @@ interface Webcomic {
   urlToKey: (url: string, cb: Callback<string | null>, err: Callback<string>) => void;
   keyToUrl: (key: string, cb: Callback<string>, err: Callback<string>) => void;
 
-  keyToImgUrl: (key: string, cb: Callback<string>, err: Callback<string>) => void;
+  keyToImgUrls: (key: string, cb: Callback<string[]>, err: Callback<string>) => void;
   adjKey: (key: string, next: boolean, cb: Callback<string | null>, err: Callback<string>) => void;
 };
 
@@ -69,8 +69,22 @@ const girlgenius: Webcomic = {
     }
   },
 
-  keyToImgUrl: (key, cb, err) => {
-     cb('http://www.girlgeniusonline.com/ggmain/strips/ggmain' + key + '.jpg');
+  keyToImgUrls: (key, cb, err) => {
+    fetchHtmlPage('http://www.girlgeniusonline.com/comic.php?date=' + key, (html) => {
+      const regex =
+          /[Ss][Rr][Cc]=['"](http:\/\/www\.girlgeniusonline\.com\/ggmain\/strips\/ggmain[0-9a-zA-Z]+.jpg)['"]/g;
+      const match1 = regex.exec(html);
+      if (match1) {
+        const match2 = regex.exec(html);
+        if (match2) {
+          cb([match1[1], match2[1]]);
+        } else {
+          cb([match1[1]]);
+        }
+      } else {
+        err("no match found");
+      }
+    }, err);
   },
 
   adjKey: (key: string, next: boolean, cb, err) => {
@@ -167,9 +181,9 @@ export function get_info(req: any, res: any) {
   const withKey = (key: string | null) => {
     if (key) {
       comic.keyToUrl(key, (url: string) => {
-        comic.keyToImgUrl(key, (imgUrl: string) => {
+        comic.keyToImgUrls(key, (imgUrls: string[]) => {
           comic.startKey((startKey: string) => {
-            res.send({ key, url, imgUrl, isStart: key === startKey, success: true });
+            res.send({ key, url, imgUrls, isStart: key === startKey, success: true });
           }, err);
         }, err);
       }, err);
