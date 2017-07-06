@@ -6,8 +6,8 @@ interface Webcomic {
   name: string;
   domain: string;
 
-	startKey: (cb: Callback<string>, err: Callback<string>) => void;
-	endKey: (cb: Callback<string>, err: Callback<string>) => void;
+  startKey: (cb: Callback<string>, err: Callback<string>) => void;
+  endKey: (cb: Callback<string>, err: Callback<string>) => void;
 
   urlToKey: (url: string, cb: Callback<string | null>, err: Callback<string>) => void;
   keyToUrl: (key: string, cb: Callback<string>, err: Callback<string>) => void;
@@ -20,11 +20,11 @@ const girlgenius: Webcomic = {
   name: 'girlgenius',
   domain: 'girlgeniusonline.com',
 
-	startKey: (cb, err) => {
-	  cb('20021104');
-	},
+  startKey: (cb, err) => {
+    cb('20021104');
+  },
 
-	endKey: (cb, err) => {
+  endKey: (cb, err) => {
     fetchHtmlPage('http://www.girlgenius.com/comic.php', (html) => {
       const url = 'http://www.girlgeniusonline.com/ggmain/strips/ggmain';
       const start = html.indexOf(url);
@@ -42,7 +42,7 @@ const girlgenius: Webcomic = {
         err("could not find id");
       }
     }, err);
-	},
+  },
 
   urlToKey: (url: string, cb, err) => {
     const prefix = 'girlgeniusonline.com/comic.php?date=';
@@ -121,6 +121,76 @@ const girlgenius: Webcomic = {
   },
 };
 
+import drmcninja_module = require('./drmcninja');
+
+const drmcninja: Webcomic = {
+  name: 'drmcninja',
+  domain: 'drmcninja.com',
+  startKey: (cb, err) => {
+    cb(drmcninja_module.entries[0].full);
+  },
+  endKey: (cb, err) => {
+    cb(drmcninja_module.entries[drmcninja_module.entries.length - 1].full);
+  },
+  urlToKey: (url, cb, err) => {
+    const spl = url.split('comic/');
+    if (spl.length != 2) {
+      err("bad url split");
+      return;
+    }
+    const short_key = spl[1].split('/')[0];
+    const entry = drmcninja_module.shortToEntry[short_key]
+    if (!entry) {
+      err("no entry found for " + short_key);
+      return;
+    }
+    cb(entry.full);
+  },
+
+  keyToUrl: (key, cb, err) => {
+    const entry = drmcninja_module.fullToEntry[key];
+    if (!entry) {
+      err("no entry found (2)");
+      return;
+    }
+    cb('http://drmcninja.com/archives/comic/' + entry.short + '/');
+  },
+
+  keyToImgUrls: (key, cb, err) => {
+    drmcninja.keyToUrl(key, (url) => {
+      fetchHtmlPage(url, (html) => {
+        const toFind = '<img src="http://drmcninja.com/comics/';
+        const index = html.indexOf(toFind);
+        if (index === -1) {
+          err("not found");
+          return;
+        }
+        const endIndex = html.indexOf('"', index + 12);
+        if (endIndex === -1) {
+          err("not found");
+          return;
+        }
+        cb([html.substring(index + 10, endIndex)]);
+      }, err);
+    }, err);
+  },
+
+  adjKey: (key, next, cb, err) => {
+    const entry = drmcninja_module.fullToEntry[key];
+    if (!entry) {
+      err("no entry found (3)");
+      return;
+    }
+    let idx = entry.idx;
+    idx += (next ? 1 : -1);
+    if (idx < 0 || idx >= drmcninja_module.entries.length) {
+      cb(null);
+    } else {
+      cb(drmcninja_module.entries[idx].full);
+    }
+  },
+};
+
 function fetchHtmlPage(url: string, cb: Callback<string>, err: Callback<string>) {
   http.get(url, (res: any) => {
     const { statusCode } = res;
@@ -142,19 +212,19 @@ function fetchHtmlPage(url: string, cb: Callback<string>, err: Callback<string>)
       return;
     }
 
-		res.setEncoding('utf8');
-		let rawData = '';
-		res.on('data', (chunk: string) => { rawData += chunk; });
-		res.on('end', () => {
-			cb(rawData);
-		});
+    res.setEncoding('utf8');
+    let rawData = '';
+    res.on('data', (chunk: string) => { rawData += chunk; });
+    res.on('end', () => {
+      cb(rawData);
+    });
   }).on('error', (e: any) => {
     console.error(`Got error for url ${url} --- ${e.message}`);
     err(e.message);
   });
 }
 
-const comics: {[comicName: string]: Webcomic} = { girlgenius };
+const comics: {[comicName: string]: Webcomic} = { girlgenius, drmcninja };
 
 export function get_info(req: any, res: any) {
   const { dir, origKey } = req.query;
