@@ -15,10 +15,10 @@ module.exports = function(grunt) {
 					declaration: true,
 
 					noImplicitAny: true,
-					//strictNullChecks: true,
+					strictNullChecks: true,
 					noImplicitAny: true,
-					//noImplicitThis: true,
-					//noUnusedLocals: true,
+					noImplicitThis: true,
+					noUnusedLocals: true,
 				}
       },
       server: {
@@ -33,10 +33,10 @@ module.exports = function(grunt) {
 					rootDir: 'src/server/',
 
 					noImplicitAny: true,
-					//strictNullChecks: true,
+					strictNullChecks: true,
 					noImplicitAny: true,
-					//noImplicitThis: true,
-					//noUnusedLocals: true,
+					noImplicitThis: true,
+					noUnusedLocals: true,
 				}
       },
     },
