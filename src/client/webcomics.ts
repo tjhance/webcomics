@@ -43,7 +43,7 @@ class ComicPage {
       key = this.startKey;
       dir = 'self';
     } else {
-      let needsAtEnd = this.buffer[this.buffer.length - 1].type === 'comic' && (this.cur > this.buffer.length - 10);
+      let needsAtEnd = this.buffer[this.buffer.length - 1].type === 'comic' && (this.cur > this.buffer.length - 25);
       let needsAtFront = this.buffer[0].type === 'comic' && this.cur < 10;
       if (needsAtEnd || needsAtFront) {
         const useFront = needsAtFront && (!needsAtEnd ||
