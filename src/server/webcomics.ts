@@ -171,7 +171,22 @@ const drmcninja: Webcomic = {
           return;
         }
         cb([html.substring(index + 10, endIndex)]);
-      }, err);
+      }, () => {
+        fetchHtmlPage(url.substring(0, url.length - 1) + '-2/', (html) => {
+          const toFind = '<img src="http://drmcninja.com/comics/';
+          const index = html.indexOf(toFind);
+          if (index === -1) {
+            err("not found");
+            return;
+          }
+          const endIndex = html.indexOf('"', index + 12);
+          if (endIndex === -1) {
+            err("not found");
+            return;
+          }
+          cb([html.substring(index + 10, endIndex)]);
+        }, err);
+      });
     }, err);
   },
 

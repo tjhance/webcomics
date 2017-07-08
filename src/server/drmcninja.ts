@@ -108,7 +108,7 @@ export const shortToEntry: {[short: string]: Entry} = {};
 
 for (const series of comics) {
   let name = series.name;
-  name = name.toLowerCase().replace(' ', '-');
+  name = name.toLowerCase().replace(/ /g, '-');
   let prefix = '';
   for (let i = 0; i < name.length; i++) {
     if ((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= '0' || name[i] <= '9') || name[i] == '-') {
