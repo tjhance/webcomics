@@ -111,7 +111,7 @@ for (const series of comics) {
   name = name.toLowerCase().replace(/ /g, '-');
   let prefix = '';
   for (let i = 0; i < name.length; i++) {
-    if ((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= '0' || name[i] <= '9') || name[i] == '-') {
+    if ((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= '0' && name[i] <= '9') || name[i] == '-') {
       prefix += name[i];
     }
   }
