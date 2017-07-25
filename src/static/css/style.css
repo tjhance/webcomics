@@ -32,6 +32,28 @@
   border-radius: 10px;
 }
 
+.history {
+  margin: auto;
+  text-align: center;
+  width: 600px;
+  background-color: #d0d0d0;
+  border-radius: 10px;
+
+  font-family: Verdana;
+}
+
+.history-header {
+  font-size: 20px;
+}
+
+.history-section {
+  padding-top: 20px;
+}
+
+.history-section-header {
+  padding-bottom: 6px;
+}
+
 .comic_url_input {
   font-size: 16px;
   width: 500px;

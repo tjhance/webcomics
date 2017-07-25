@@ -26,9 +26,12 @@ class ComicPage {
   cur = -1;
   root: HTMLElement;
 
+  cookieManager: CookieManager;
+
   constructor(
       public comic: string,
       public startKey: string) {
+    this.cookieManager = new CookieManager(comic, startKey);
     this.root = document.getElementsByClassName('view-container')[0] as HTMLElement;
     this.attempt();
     this.addScrollHandler();
@@ -90,6 +93,10 @@ class ComicPage {
       }
 
       setTimeout(() => this.attempt(), 0);
+
+      if (dir === 'self') {
+        this.updateCookies();
+      }
     });
   }
 
@@ -328,6 +335,7 @@ class ComicPage {
     if (this.cur !== lo) {
       this.cur = lo;
       this.updateUrl();
+      this.updateCookies();
     }
   }
 
@@ -347,17 +355,21 @@ class ComicPage {
     });
   }
 
-  updateUrl() {
-    let key = null;
+  getCurrentKey(): string | null {
     if (0 < this.cur && this.cur < this.buffer.length) {
       if (this.buffer[this.cur].type === 'comic') {
-        key = (this.buffer[this.cur] as InfoComic).key;
+        return (this.buffer[this.cur] as InfoComic).key;
       } else if (this.buffer[this.cur].type === 'startmarker' && this.cur > 0) {
-        key = (this.buffer[this.cur - 1] as InfoComic).key;
+        return (this.buffer[this.cur - 1] as InfoComic).key;
       } else if (this.buffer[this.cur].type === 'endmarker' && this.cur < this.buffer.length - 1) {
-        key = (this.buffer[this.cur + 1] as InfoComic).key;
+        return (this.buffer[this.cur + 1] as InfoComic).key;
       }
     }
+    return null;
+  }
+
+  updateUrl() {
+    const key = this.getCurrentKey();
     if (key == null) {
       return;
     }
@@ -365,9 +377,171 @@ class ComicPage {
     window.history.replaceState(key, '',
         window.location.origin + '/comicview?comic=' +
         encodeURIComponent(this.comic) + '&index=' + encodeURIComponent(key));
+  }
 
+  updateCookies() {
+    const key = this.getCurrentKey();
+    if (key == null) {
+      return;
+    }
+
+    this.cookieManager.setCur(key);
+    this.cookieManager.save();
   }
 }
+
+type HistoryEntry = {
+  comic: string;
+  key: string;
+  date: Date;
+};
+
+class CookieManager {
+	prevHistory: HistoryEntry[];
+
+	comicname: string;
+	startKey: string;
+	startDate: Date;
+	curKey: string;
+	curDate: Date;
+
+  constructor(comicname: string, startKey: string) {
+    this.comicname = comicname;
+
+    this.startKey = startKey;
+    this.startDate = new Date();
+
+    this.curKey = this.startKey;
+    this.curDate = this.startDate;
+
+    this.prevHistory = getHistory();
+  }
+
+  setCur(key: string) {
+    this.curKey = key;
+    this.curDate = new Date();
+  }
+
+  getHistoryToSave(): HistoryEntry[] {
+    const entries = this.prevHistory.slice(0);
+    const append = (key: string, date: Date) => {
+      for (let i = 0; i < entries.length; i++) {
+        if (entries[i].comic === this.comicname && entries[i].key === key) {
+          entries.splice(i, 1);
+          break;
+        }
+      }
+      entries.push({
+        comic: this.comicname,
+        key: key,
+        date: date,
+      });
+    };
+    append(this.startKey, this.startDate);
+    append(this.curKey, this.curDate);
+    return entries;
+  }
+
+  save() {
+    saveHistory(this.getHistoryToSave());
+  }
+}
+
+function getHistory(): HistoryEntry[] {
+  try {
+    const cookie = docCookies.getItem("history");
+    if (!cookie) {
+      return [];
+    }
+    const entries = JSON.parse(cookie);
+    entries.forEach((entry: any) => {
+      entry.date = new Date(entry.date);
+    });
+    return entries;
+  } catch(ex) {
+    return [];
+  }
+}
+
+function saveHistory(entries: HistoryEntry[]) {
+  docCookies.setItem("history", JSON.stringify(entries), Infinity);
+}
+
+/*\
+|*|
+|*|  :: cookies.js ::
+|*|
+|*|  A complete cookies reader/writer framework with full unicode support.
+|*|
+|*|  Revision #3 - July 13th, 2017
+|*|
+|*|  https://developer.mozilla.org/en-US/docs/Web/API/document.cookie
+|*|  https://developer.mozilla.org/User:fusionchess
+|*|  https://github.com/madmurphy/cookies.js
+|*|
+|*|  This framework is released under the GNU Public License, version 3 or later.
+|*|  http://www.gnu.org/licenses/gpl-3.0-standalone.html
+|*|
+|*|  Syntaxes:
+|*|
+|*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+|*|  * docCookies.getItem(name)
+|*|  * docCookies.removeItem(name[, path[, domain]])
+|*|  * docCookies.hasItem(name)
+|*|  * docCookies.keys()
+|*|
+\*/
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie/Simple_document.cookie_framework
+
+const docCookies = {
+  getItem: function (sKey: string) {
+    if (!sKey) { return null; }
+    return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+  },
+  setItem: function (sKey: string, sValue: string, vEnd?: any, sPath?: any, sDomain?: any, bSecure?: any) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
+    let sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ? "; expires=Fri, 31 Dec 9999 23:59:59 GMT" : "; max-age=" + vEnd;
+          /*
+          Note: Despite officially defined in RFC 6265, the use of `max-age` is not compatible with any
+          version of Internet Explorer, Edge and some mobile browsers. Therefore passing a number to
+          the end parameter might not work as expected. A possible solution might be to convert the the
+          relative time to an absolute time. For instance, replacing the previous line with:
+          */
+          /*
+          sExpires = vEnd === Infinity ? "; expires=Fri, 31 Dec 9999 23:59:59 GMT" : "; expires=" + (new Date(vEnd * 1e3 + Date.now())).toUTCString();
+          */
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toUTCString();
+          break;
+      }
+    }
+    document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+    return true;
+  },
+  removeItem: function (sKey: string, sPath?: any, sDomain?: any) {
+    if (!this.hasItem(sKey)) { return false; }
+    document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "");
+    return true;
+  },
+  hasItem: function (sKey: string) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
+    return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: function () {
+    const aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (let nLen = aKeys.length, nIdx = 0; nIdx < nLen; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
 
 (window as any).initApp = function() {
   const query = getQuery();
@@ -378,6 +552,71 @@ class ComicPage {
   } else {
     window.location.href = '/home';
   }
+};
+
+type Section = {
+  name: string;
+  entries: HistoryEntry[];
+};
+
+(window as any).initHome = function() {
+  const entries = getHistory().reverse();
+
+  const sections: Section[] = [];
+  const nameToSectionIndex: {[name: string]: number} = {};
+  entries.forEach((entry: HistoryEntry) => {
+    if (entry.comic in nameToSectionIndex) {
+      sections[nameToSectionIndex[entry.comic]].entries.push(entry);
+    } else {
+      sections.push({
+        name: entry.comic,
+        entries: [entry],
+      });
+      nameToSectionIndex[entry.comic] = sections.length - 1;
+    }
+  });
+
+  let elem: HTMLElement;
+  if (sections.length === 0) {
+    elem = document.createElement('div');
+    elem.className = 'no-history';
+    elem.appendChild(document.createTextNode('No history to display.'));
+  } else {
+    elem = document.createElement('div');
+    elem.className = 'yes-history';
+
+    const header = document.createElement('div');
+    header.className = 'history-header';
+    header.appendChild(document.createTextNode('History'));
+    elem.appendChild(header);
+
+    sections.forEach((section) => {
+      const sectionElem = document.createElement('div');
+      sectionElem.className = 'history-section';
+
+      const header = document.createElement('div');
+      header.className = 'history-section-header';
+      header.appendChild(document.createTextNode(section.name));
+      sectionElem.appendChild(header);
+
+      section.entries.forEach((entry) => {
+        const entryElem = document.createElement('div');
+        entryElem.className = 'section-entry';
+        const anode = document.createElement('a');
+        anode.setAttribute('href', 
+            window.location.origin + '/comicview?comic=' +
+            encodeURIComponent(entry.comic) + '&index=' + encodeURIComponent(entry.key));
+        anode.appendChild(document.createTextNode(entry.key));
+        entryElem.appendChild(anode);
+        entryElem.appendChild(document.createTextNode(' at ' + String(entry.date)));
+        sectionElem.appendChild(entryElem);
+      });
+
+      elem.appendChild(sectionElem);
+    });
+  }
+
+  document.getElementsByClassName('history')[0].appendChild(elem);
 };
 
 function getQuery() {

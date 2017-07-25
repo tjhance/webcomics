@@ -79,6 +79,9 @@ function home(req: any, res: any) {
 
     <!-- stylesheets -->
     <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
+
+    <!-- javascript app code -->
+    <script type="text/javascript" src="/static/bundle.js"></script>
   </head>
   <body>
     <form method="POST" action="/process_form">
@@ -97,6 +100,11 @@ function home(req: any, res: any) {
         </div>
       </div>
     </form>
+    <div class="history">
+    </div>
+    <script type="text/javascript">
+      window.initHome();
+    </script>
   </body>
 </html>
 `;
