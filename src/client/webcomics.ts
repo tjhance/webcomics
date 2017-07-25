@@ -356,7 +356,7 @@ class ComicPage {
   }
 
   getCurrentKey(): string | null {
-    if (0 < this.cur && this.cur < this.buffer.length) {
+    if (0 <= this.cur && this.cur < this.buffer.length) {
       if (this.buffer[this.cur].type === 'comic') {
         return (this.buffer[this.cur] as InfoComic).key;
       } else if (this.buffer[this.cur].type === 'startmarker' && this.cur > 0) {
