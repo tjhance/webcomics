@@ -88,6 +88,16 @@ const girlgenius: Webcomic = {
   },
 
   adjKey: (key: string, next: boolean, cb, err) => {
+    // special case to skip advertisement
+    if (key === '20091026' && next) {
+      cb('20091028');
+      return;
+    }
+    if (key === '20091028' && !next) {
+      cb('20091026');
+      return;
+    }
+
     girlgenius.keyToUrl(key, (url) => {
       fetchHtmlPage(url, (html) => {
         const getUrl = (next: boolean) => {
