@@ -449,7 +449,10 @@ class CookieManager {
 
 function getHistory(): HistoryEntry[] {
   try {
-    const cookie = docCookies.getItem("history");
+    let cookie: string | null = window.localStorage.getItem("history");
+    if (!cookie) {
+      cookie = docCookies.getItem("history");
+    }
     if (!cookie) {
       return [];
     }
@@ -464,7 +467,7 @@ function getHistory(): HistoryEntry[] {
 }
 
 function saveHistory(entries: HistoryEntry[]) {
-  docCookies.setItem("history", JSON.stringify(entries), Infinity);
+  localStorage.setItem("history", JSON.stringify(entries));
 }
 
 /*\
