@@ -1,3 +1,88 @@
+import {Webcomic, fetchHtmlPage} from '../common';
+
+export const drmcninja: Webcomic = {
+  name: 'drmcninja',
+  domain: 'drmcninja.com',
+  startKey: (cb, err) => {
+    cb(entries[0].full);
+  },
+  endKey: (cb, err) => {
+    cb(entries[entries.length - 1].full);
+  },
+  urlToKey: (url, cb, err) => {
+    const spl = url.split('comic/');
+    if (spl.length != 2) {
+      err("bad url split");
+      return;
+    }
+    const short_key = spl[1].split('/')[0];
+    const entry = shortToEntry[short_key]
+    if (!entry) {
+      err("no entry found for " + short_key);
+      return;
+    }
+    cb(entry.full);
+  },
+
+  keyToUrl: (key, cb, err) => {
+    const entry = fullToEntry[key];
+    if (!entry) {
+      err("no entry found (2)");
+      return;
+    }
+    cb('http://drmcninja.com/archives/comic/' + entry.short + '/');
+  },
+
+  keyToImgUrls: (key, cb, err) => {
+    drmcninja.keyToUrl(key, (url) => {
+      fetchHtmlPage(url, (html) => {
+        const toFind = '<img src="http://drmcninja.com/comics/';
+        const index = html.indexOf(toFind);
+        if (index === -1) {
+          err("not found");
+          return;
+        }
+        const endIndex = html.indexOf('"', index + 12);
+        if (endIndex === -1) {
+          err("not found");
+          return;
+        }
+        cb([html.substring(index + 10, endIndex)]);
+      }, () => {
+        fetchHtmlPage(url.substring(0, url.length - 1) + '-2/', (html) => {
+          const toFind = '<img src="http://drmcninja.com/comics/';
+          const index = html.indexOf(toFind);
+          if (index === -1) {
+            err("not found");
+            return;
+          }
+          const endIndex = html.indexOf('"', index + 12);
+          if (endIndex === -1) {
+            err("not found");
+            return;
+          }
+          cb([html.substring(index + 10, endIndex)]);
+        }, err);
+      });
+    }, err);
+  },
+
+  adjKey: (key, next, cb, err) => {
+    const entry = fullToEntry[key];
+    if (!entry) {
+      err("no entry found (3)");
+      return;
+    }
+    let idx = entry.idx;
+    idx += (next ? 1 : -1);
+    if (idx < 0 || idx >= entries.length) {
+      cb(null);
+    } else {
+      cb(entries[idx].full);
+    }
+  },
+};
+
 const comics = [{
     "name": "Issue One Half",
     "posts": ["0p1", "0p2", "0p3", "0p4", "0p5", "0p6", "0p7", "0p8", "0p9", "0p10", "0p11", "0p12", "0p13", "0p14"]
