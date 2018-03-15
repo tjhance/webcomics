@@ -3,8 +3,14 @@ import { Webcomic } from './common';
 import { girlgenius } from './comics/girlgenius';
 import { drmcninja } from './comics/drmcninja';
 import { themeek } from './comics/themeek';
+import { everblue } from './comics/everblue';
 
-const comics: {[comicName: string]: Webcomic} = { girlgenius, drmcninja, themeek };
+const comics: {[comicName: string]: Webcomic} = {
+  girlgenius,
+  drmcninja,
+  themeek,
+  everblue,
+};
 
 export function get_info(req: any, res: any) {
   const { dir, origKey } = req.query;
