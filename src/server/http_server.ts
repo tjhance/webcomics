@@ -106,7 +106,7 @@ function home(req: any, res: any) {
       Girl Genius <a href="/comicview?comic=girlgenius&index=20021104">(start)</a> <br>
       Dr. McNinja <a href="/comicview?comic=drmcninja&index=issue-one-half-0p1">(start)</a> <br>
       Everblue <a href="/comicview?comic=everblue&index=1">(start)</a> <br>
-      Gunnerkrigg Court <a href="http://localhost:3000/comicview?comic=gunnerkriggcourt&index=1">(start)</a>
+      Gunnerkrigg Court <a href="/comicview?comic=gunnerkriggcourt&index=1">(start)</a>
     </div></p>
     <div class="history">
     </div>
