@@ -4,12 +4,14 @@ import { girlgenius } from './comics/girlgenius';
 import { drmcninja } from './comics/drmcninja';
 import { themeek } from './comics/themeek';
 import { everblue } from './comics/everblue';
+import { gunnerkriggcourt } from './comics/gunnerkriggcourt';
 
 const comics: {[comicName: string]: Webcomic} = {
   girlgenius,
   drmcninja,
   themeek,
   everblue,
+  gunnerkriggcourt,
 };
 
 export function get_info(req: any, res: any) {
