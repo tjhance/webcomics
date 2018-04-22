@@ -32,6 +32,16 @@
   border-radius: 10px;
 }
 
+.linksbox {
+  margin: auto;
+  text-align: center;
+  width: 600px;
+  background-color: #d0d0d0;
+  border-radius: 10px;
+
+  font-family: Verdana;
+}
+
 .history {
   margin: auto;
   text-align: center;
@@ -40,6 +50,10 @@
   border-radius: 10px;
 
   font-family: Verdana;
+}
+
+.linksbox-header {
+  font-size: 20px;
 }
 
 .history-header {

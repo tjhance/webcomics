@@ -75,6 +75,7 @@ function home(req: any, res: any) {
 `<!doctype>
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
     <title>Infinite Comic</title>
 
     <!-- stylesheets -->
@@ -100,6 +101,13 @@ function home(req: any, res: any) {
         </div>
       </div>
     </form>
+    <p><div class="linksbox">
+      <span class="linksbox-header">Supported Comics</span> <br> <br>
+      Girl Genius <a href="/comicview?comic=girlgenius&index=20021104">(start)</a> <br>
+      Dr. McNinja <a href="/comicview?comic=drmcninja&index=issue-one-half-0p1">(start)</a> <br>
+      Everblue <a href="/comicview?comic=everblue&index=1">(start)</a> <br>
+      Gunnerkrigg Court <a href="http://localhost:3000/comicview?comic=gunnerkriggcourt&index=1">(start)</a>
+    </div></p>
     <div class="history">
     </div>
     <script type="text/javascript">
