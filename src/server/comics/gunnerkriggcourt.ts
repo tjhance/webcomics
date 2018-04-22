@@ -1,71 +1,68 @@
 import {Webcomic, fetchHtmlPage} from '../common';
 
-export const gunnerkriggcourt: Webcomic = {
-  name: 'gunnerkriggcourt',
-  domain: 'gunnerkrigg.com',
+export class gunnerkriggcourt implements Webcomic {
+  name = 'gunnerkriggcourt';
+  domain = 'gunnerkrigg.com';
 
-  startKey: (cb, err) => {
-    cb('1');
-  },
+  async startKey() {
+    return '1';
+  }
 
-  endKey: (cb, err) => {
-    fetchHtmlPage('http://www.gunnerkrigg.com/', (html) => {
-      const match = /<img class="comic_image" src="\/comics\/(\d+).jpg">/.exec(html);
-      if (match) {
-        cb(String(Number(match[1])));
-      } else {
-        err("endKey: match not found");
-      }
-    }, err);
-  },
+  async endKey() {
+    const html = await fetchHtmlPage('http://www.gunnerkrigg.com/');
+    const match = /<img class="comic_image" src="\/comics\/(\d+).jpg">/.exec(html);
+    if (match) {
+      return String(Number(match[1]));
+    } else {
+      throw new Error("endKey: match not found");
+    }
+  }
 
-  urlToKey: (url: string, cb, err) => {
+  async urlToKey(url: string) {
     const match = /\?p=(\d+)/.exec(url);
     if (match) {
-      cb(match[1]);
+      return match[1];
     } else {
-      gunnerkriggcourt.endKey(cb, err);
+      return (await this.endKey());
     }
-  },
+  }
 
-  keyToUrl: (key: string, cb, err) => {
+  async keyToUrl(key: string) {
     if (!key.match(/^\d+$/)) {
-      err("invalid key: " + key);
+      throw new Error("invalid key: " + key);
     } else {
-      cb('http://www.gunnerkrigg.com/?p=' + key);
+      return 'http://www.gunnerkrigg.com/?p=' + key;
     }
-  },
+  }
 
-  keyToImgUrls: (key, cb, err) => {
+  async keyToImgUrls(key: string) {
     while (key.length < 8) {
       key = "0" + key;
     }
-    cb(['http://www.gunnerkrigg.com/comics/' + key + '.jpg']);
-  },
+    return ['http://www.gunnerkrigg.com/comics/' + key + '.jpg'];
+  }
 
-  adjKey: (key: string, next: boolean, cb, err) => {
+  async adjKey(key: string, next: boolean) {
     if (!key.match(/^\d+$/)) {
-      err("invalid key: " + key);
-      return;
+      throw new Error("invalid key: " + key);
     }
 
     if (!next) {
       const newKey = Number(key) - 1;
       if (newKey <= 0) {
-        cb(null);
+        return null;
       } else {
-        cb(String(newKey));
+        return String(newKey);
       }
     } else {
-      gunnerkriggcourt.endKey((endKey) => {
-        const newKey = Number(key) + 1;
-        const lastKey = Number(endKey);
-        if (newKey > lastKey) {
-          cb(null);
-        } else {
-          cb(String(newKey));
-        }
-      }, err);
+      const endKey = await this.endKey();
+      const newKey = Number(key) + 1;
+      const lastKey = Number(endKey);
+      if (newKey > lastKey) {
+        return null;
+      } else {
+        return String(newKey);
+      }
     }
   }
 }

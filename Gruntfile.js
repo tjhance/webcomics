@@ -37,6 +37,8 @@ module.exports = function(grunt) {
 					noImplicitAny: true,
 					noImplicitThis: true,
 					noUnusedLocals: true,
+
+					lib: [ "es2016", "dom" ],
 				}
       },
     },

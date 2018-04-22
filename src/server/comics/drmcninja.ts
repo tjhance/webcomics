@@ -1,87 +1,72 @@
 import {Webcomic, fetchHtmlPage} from '../common';
 
-export const drmcninja: Webcomic = {
-  name: 'drmcninja',
-  domain: 'drmcninja.com',
-  startKey: (cb, err) => {
-    cb(entries[0].full);
-  },
-  endKey: (cb, err) => {
-    cb(entries[entries.length - 1].full);
-  },
-  urlToKey: (url, cb, err) => {
+export class drmcninja implements Webcomic {
+  name = 'drmcninja';
+  domain = 'drmcninja.com';
+
+  async startKey() {
+    return entries[0].full;
+  }
+
+  async endKey() {
+    return entries[entries.length - 1].full;
+  }
+
+  async urlToKey(url: string) {
     const spl = url.split('comic/');
     if (spl.length != 2) {
-      err("bad url split");
-      return;
+      throw new Error("bad url split");
     }
     const short_key = spl[1].split('/')[0];
     const entry = shortToEntry[short_key]
     if (!entry) {
-      err("no entry found for " + short_key);
-      return;
+      throw new Error("no entry found for " + short_key);
     }
-    cb(entry.full);
-  },
+    return entry.full;
+  }
 
-  keyToUrl: (key, cb, err) => {
+  async keyToUrl(key: string) {
     const entry = fullToEntry[key];
     if (!entry) {
-      err("no entry found (2)");
-      return;
+      throw new Error ("no entry found (2)");
     }
-    cb('http://drmcninja.com/archives/comic/' + entry.short + '/');
-  },
+    return 'http://drmcninja.com/archives/comic/' + entry.short + '/';
+  }
 
-  keyToImgUrls: (key, cb, err) => {
-    drmcninja.keyToUrl(key, (url) => {
-      fetchHtmlPage(url, (html) => {
-        const toFind = '<img src="http://drmcninja.com/comics/';
-        const index = html.indexOf(toFind);
-        if (index === -1) {
-          err("not found");
-          return;
-        }
-        const endIndex = html.indexOf('"', index + 12);
-        if (endIndex === -1) {
-          err("not found");
-          return;
-        }
-        cb([html.substring(index + 10, endIndex)]);
-      }, () => {
-        fetchHtmlPage(url.substring(0, url.length - 1) + '-2/', (html) => {
-          const toFind = '<img src="http://drmcninja.com/comics/';
-          const index = html.indexOf(toFind);
-          if (index === -1) {
-            err("not found");
-            return;
-          }
-          const endIndex = html.indexOf('"', index + 12);
-          if (endIndex === -1) {
-            err("not found");
-            return;
-          }
-          cb([html.substring(index + 10, endIndex)]);
-        }, err);
-      });
-    }, err);
-  },
+  async keyToImgUrls(key: string) {
+    const url = await this.keyToUrl(key);
+    let html: string;
+    try {
+      html = await fetchHtmlPage(url);
+    } catch (ex) {
+      html = await fetchHtmlPage(url.substring(0, url.length - 1) + '-2/');
+    }
+    const toFind = '<img src="http://drmcninja.com/comics/';
+    const index = html.indexOf(toFind);
+    if (index === -1) {
+      throw new Error("not found");
+    }
+    const endIndex = html.indexOf('"', index + 12);
+    if (endIndex === -1) {
+      throw new Error("not found");
+    }
+    return [html.substring(index + 10, endIndex)];
+  }
 
-  adjKey: (key, next, cb, err) => {
+  async adjKey(key: string, next: boolean) {
     const entry = fullToEntry[key];
     if (!entry) {
-      err("no entry found (3)");
-      return;
+      throw new Error("no entry found (3)");
     }
     let idx = entry.idx;
     idx += (next ? 1 : -1);
     if (idx < 0 || idx >= entries.length) {
-      cb(null);
+      return null;
     } else {
-      cb(entries[idx].full);
+      return entries[idx].full;
     }
-  },
-};
+  }
+}
 
 const comics = [{
     "name": "Issue One Half",

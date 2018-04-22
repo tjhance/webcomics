@@ -1,78 +1,73 @@
 import {Webcomic, fetchHtmlPage} from '../common';
 
-export const everblue: Webcomic = {
-  name: 'everblue',
-  domain: 'everblue-comic.com',
+export class everblue implements Webcomic {
+  name = 'everblue';
+  domain = 'everblue-comic.com';
 
-  startKey: (cb, err) => {
-    cb('1');
-  },
+  async startKey() {
+    return "1";
+  }
 
-  endKey: (cb, err) => {
-    fetchHtmlPage('http://www.everblue-comic.com/', (html) => {
-      const match = /<a class="prev navlink" href="\/comic\/(\d+)"/.exec(html);
-      if (match) {
-        cb(String(Number(match[1]) + 1));
-      } else {
-        err("endKey: match not found");
-      }
-    }, err);
-  },
+  async endKey() {
+    const html = await fetchHtmlPage('http://www.everblue-comic.com/');
+    const match = /<a class="prev navlink" href="\/comic\/(\d+)"/.exec(html);
+    if (match) {
+      return String(Number(match[1]) + 1);
+    } else {
+      throw new Error("endKey: match not found");
+    }
+  }
 
-  urlToKey: (url: string, cb, err) => {
+  async urlToKey(url: string) {
     const match = /everblue-comic.com\/comic\/(\d+)/.exec(url);
     if (match) {
-      cb(match[1]);
+      return match[1];
     } else {
-      everblue.endKey(cb, err);
+      return (await this.endKey());
     }
-  },
+  }
 
-  keyToUrl: (key: string, cb, err) => {
+  async keyToUrl(key: string) {
     if (!key.match(/^\d+$/)) {
-      err("invalid key: " + key);
+      throw new Error("invalid key: " + key);
     } else {
-      cb('http://www.everblue-comic.com/comic/' + key);
+      return 'http://www.everblue-comic.com/comic/' + key;
     }
-  },
+  }
 
-  keyToImgUrls: (key, cb, err) => {
-    everblue.keyToUrl(key, (url) => {
-      fetchHtmlPage(url, (html) => {
-        const match = /<img itemprop="image" src="\/([\/a-zA-Z0-9\-\.]+)"/.exec(html);
-        if (match) {
-          const url = 'http://www.everblue-comic.com/' + match[1];
-          cb([url]);
-        } else {
-          err("keyToImgUrls: no match found");
-        }
-      }, err);
-    }, err);
-  },
+  async keyToImgUrls(key: string) {
+    const url = await this.keyToUrl(key);
+    const html = await fetchHtmlPage(url);
+    const match = /<img itemprop="image" src="\/([\/a-zA-Z0-9\-\.]+)"/.exec(html);
+    if (match) {
+      const url = 'http://www.everblue-comic.com/' + match[1];
+      return [url];
+    } else {
+      throw new Error("keyToImgUrls: no match found");
+    }
+  }
 
-  adjKey: (key: string, next: boolean, cb, err) => {
+  async adjKey(key: string, next: boolean) {
     if (!key.match(/^\d+$/)) {
-      err("invalid key: " + key);
-      return;
+      throw new Error("invalid key: " + key);
     }
 
     if (!next) {
       const newKey = Number(key) - 1;
       if (newKey <= 0) {
-        cb(null);
+        return null;
       } else {
-        cb(String(newKey));
+        return String(newKey);
       }
     } else {
-      everblue.endKey((endKey) => {
-        const newKey = Number(key) + 1;
-        const lastKey = Number(endKey);
-        if (newKey > lastKey) {
-          cb(null);
-        } else {
-          cb(String(newKey));
-        }
-      }, err);
+      const endKey = await this.endKey();
+      const newKey = Number(key) + 1;
+      const lastKey = Number(endKey);
+      if (newKey > lastKey) {
+        return null;
+      } else {
+        return String(newKey);
+      }
     }
   }
 }

@@ -7,14 +7,14 @@ import { everblue } from './comics/everblue';
 import { gunnerkriggcourt } from './comics/gunnerkriggcourt';
 
 const comics: {[comicName: string]: Webcomic} = {
-  girlgenius,
-  drmcninja,
-  themeek,
-  everblue,
-  gunnerkriggcourt,
+  girlgenius: new girlgenius(),
+  drmcninja: new drmcninja(),
+  themeek: new themeek(),
+  everblue: new everblue(),
+  gunnerkriggcourt: new gunnerkriggcourt(),
 };
 
-export function get_info(req: any, res: any) {
+export async function get_info(req: any, res: any) {
   const { dir, origKey } = req.query;
   const comicName = req.query.comic;
 
@@ -23,41 +23,39 @@ export function get_info(req: any, res: any) {
       typeof(origKey) !== 'string') {
     res.statusCode = 400;
     res.send('invalid args');
+    return;
   }
 
   const comic = comics[comicName];
   if (!comic || !(dir === 'self' || dir === 'prev' || dir === 'next')) {
     res.statusCode = 400;
     res.send('invalid args');
+    return;
   }
 
-  const err = (msg: string) => {
-    res.statusCode = 500;
-    res.send(msg);
-  }
+  try {
+    let key: string | null = null;
+    if (dir === 'self') {
+      key = origKey;
+    } else {
+      key = await comic.adjKey(origKey, dir === 'next');
+    }
 
-  const withKey = (key: string | null) => {
     if (key) {
-      comic.keyToUrl(key, (url: string) => {
-        comic.keyToImgUrls(key, (imgUrls: string[]) => {
-          comic.startKey((startKey: string) => {
-            res.send({ key, url, imgUrls, isStart: key === startKey, success: true });
-          }, err);
-        }, err);
-      }, err);
+      const url = await comic.keyToUrl(key);
+      const imgUrls = await comic.keyToImgUrls(key);
+      const startKey = await comic.startKey();
+      res.send({ key, url, imgUrls, isStart: key === startKey, success: true });
     } else {
       res.send({ atEnd: true, success: true });
     }
-  };
-
-  if (dir === 'self') {
-    withKey(origKey);
-  } else {
-    comic.adjKey(origKey, dir === 'next', withKey, err);;
+  } catch (ex) {
+    res.statusCode = 500;
+    res.send(ex.message);
   }
 }
 
-export function process_form(req: any, res: any) {
+export async function process_form(req: any, res: any) {
   const comic_url: string = req.body.comic_url;
   if (typeof(comic_url) !== 'string') {
     res.statusCode = 400;
@@ -79,18 +77,17 @@ export function process_form(req: any, res: any) {
     return;
   }
 
-  const err = (message: string) => {
-    res.statusCode = 500;
-    res.send(message);
-  };
-
-  comic.urlToKey(comic_url, (key: string | null) => {
+  try {
+    const key = await comic.urlToKey(comic_url);
     if (!key) {
       res.statusCode = 400;
-      res.send("bad url for " + comic!.name);
+      res.send("bad url for " + comic.name);
     } else {
-      res.redirect("/comicview?comic=" + encodeURIComponent(comic!.name) + "&index=" +
+      res.redirect("/comicview?comic=" + encodeURIComponent(comic.name) + "&index=" +
           encodeURIComponent(key));
     }
-  }, err);
+  } catch(ex) {
+    res.statusCode = 500;
+    res.send(ex.message);
+  }
 }

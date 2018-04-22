@@ -1,34 +1,33 @@
 import {Webcomic, fetchHtmlPage} from '../common';
 
-export const girlgenius: Webcomic = {
-  name: 'girlgenius',
-  domain: 'girlgeniusonline.com',
+export class girlgenius implements Webcomic {
+  name = 'girlgenius';
+  domain = 'girlgeniusonline.com';
 
-  startKey: (cb, err) => {
-    cb('20021104');
-  },
+  async startKey() {
+    return '20021104';
+  }
 
-  endKey: (cb, err) => {
-    fetchHtmlPage('http://www.girlgenius.com/comic.php', (html) => {
-      const url = 'http://www.girlgeniusonline.com/ggmain/strips/ggmain';
-      const start = html.indexOf(url);
-      if (start === -1) {
-        err('comic url not found');
-      }
-      const idStart = start + url.length;
-      let idEnd = idStart;
-      while (idEnd < html.length && html[idEnd] >= '0' && html[idEnd] <= '9') {
-        idEnd++;
-      }
-      if (idEnd > idStart) {
-        cb(html.substring(idStart, idEnd));
-      } else {
-        err("could not find id");
-      }
-    }, err);
-  },
+  async endKey() {
+    const html = await fetchHtmlPage('http://www.girlgeniusonline.com/comic.php');
+    const url = 'http://www.girlgeniusonline.com/ggmain/strips/ggmain';
+    const start = html.indexOf(url);
+    if (start === -1) {
+      throw new Error('comic url not found');
+    }
+    const idStart = start + url.length;
+    let idEnd = idStart;
+    while (idEnd < html.length && html[idEnd] >= '0' && html[idEnd] <= '9') {
+      idEnd++;
+    }
+    if (idEnd > idStart) {
+      return html.substring(idStart, idEnd);
+    } else {
+      throw new Error("could not find id");
+    }
+  }
 
-  urlToKey: (url: string, cb, err) => {
+  async urlToKey(url: string) {
     const prefix = 'girlgeniusonline.com/comic.php?date=';
     const index = url.indexOf(prefix);
     if (index !== -1) {
@@ -37,81 +36,78 @@ export const girlgenius: Webcomic = {
       while (end < url.length && (url[end] >= '0' && url[end] <= '9')) {
         end++;
       }
-      cb(url.substring(start, end) || null);
+      return url.substring(start, end) || null;
     } else if (url.indexOf('girlgeniusonline.com/comic.php') !== -1) {
-      girlgenius.endKey(cb, err);
+      const key = await this.endKey();
+      return key;
     } else {
-      cb(null);
+      return null;
     }
-  },
+  }
 
-  keyToUrl: (key: string, cb, err) => {
+  async keyToUrl(key: string) {
     if (!key.match(/^\d+$/)) {
-      err("invalid key: " + key);
+      throw new Error("invalid key: " + key);
     } else {
-      cb('http://www.girlgeniusonline.com/comic.php?date=' + key);
+      return 'http://www.girlgeniusonline.com/comic.php?date=' + key;
     }
-  },
+  }
 
-  keyToImgUrls: (key, cb, err) => {
-    fetchHtmlPage('http://www.girlgeniusonline.com/comic.php?date=' + key, (html) => {
-      const regex =
-          /[Ss][Rr][Cc]=['"](http:\/\/www\.girlgeniusonline\.com\/ggmain\/strips\/ggmain[0-9a-zA-Z]+.jpg)['"]/g;
-      const match1 = regex.exec(html);
-      if (match1) {
-        const match2 = regex.exec(html);
-        if (match2) {
-          cb([match1[1], match2[1]]);
-        } else {
-          cb([match1[1]]);
-        }
+  async keyToImgUrls(key: string) {
+    const html = await fetchHtmlPage('http://www.girlgeniusonline.com/comic.php?date=' + key);
+    const regex =
+        /[Ss][Rr][Cc]=['"](http:\/\/www\.girlgeniusonline\.com\/ggmain\/strips\/ggmain[0-9a-zA-Z]+.jpg)['"]/g;
+    const match1 = regex.exec(html);
+    if (match1) {
+      const match2 = regex.exec(html);
+      if (match2) {
+        return [match1[1], match2[1]];
       } else {
-        err("no match found");
+        return [match1[1]];
       }
-    }, err);
-  },
+    } else {
+      throw new Error("no match found");
+    }
+  }
 
-  adjKey: (key: string, next: boolean, cb, err) => {
+  async adjKey(key: string, next: boolean) {
     // special case to skip advertisement
     if (key === '20091026' && next) {
-      cb('20091028');
-      return;
+      return '20091028';
     }
     if (key === '20091028' && !next) {
-      cb('20091026');
-      return;
+      return '20091026';
     }
 
-    girlgenius.keyToUrl(key, (url) => {
-      fetchHtmlPage(url, (html) => {
-        const getUrl = (next: boolean) => {
-          const index = html.indexOf(next ? 'title="The Next Comic"' : 'title="The Previous Comic"');
-          if (index === -1) return null;
-          const hrefStart = html.lastIndexOf('href="', index);
-          if (hrefStart === -1) return null;
-          const urlStart = hrefStart + ('href="'.length);
+    const url = await this.keyToUrl(key);
+    const html = await fetchHtmlPage(url);
 
-          const url = 'http://www.girlgeniusonline.com/comic.php?date=';
-          if (html.substr(urlStart, url.length) !== url) {
-            return null;
-          }
+    const getUrl = (next: boolean) => {
+      const index = html.indexOf(next ? 'title="The Next Comic"' : 'title="The Previous Comic"');
+      if (index === -1) return null;
+      const hrefStart = html.lastIndexOf('href="', index);
+      if (hrefStart === -1) return null;
+      const urlStart = hrefStart + ('href="'.length);
 
-          const idStart = urlStart + url.length;
-          let end = idStart;
-          while (end < html.length && (html[end] >= '0' && html[end] <= '9')) {
-            end++;
-          }
+      const url = 'http://www.girlgeniusonline.com/comic.php?date=';
+      if (html.substr(urlStart, url.length) !== url) {
+        return null;
+      }
 
-          return html.substring(idStart, end);
-        };
-        const nextUrl = getUrl(true);
-        const lastUrl = getUrl(false);
-        if (!nextUrl && !lastUrl) {
-          err('something was wrong with the page - neither next or last was found');
-        }
-        cb(next ? nextUrl : lastUrl);
-      }, err);
-    }, err);
-  },
-};
+      const idStart = urlStart + url.length;
+      let end = idStart;
+      while (end < html.length && (html[end] >= '0' && html[end] <= '9')) {
+        end++;
+      }
 
+      return html.substring(idStart, end);
+    };
+
+    const nextUrl = getUrl(true);
+    const lastUrl = getUrl(false);
+    if (!nextUrl && !lastUrl) {
+      throw new Error('something was wrong with the page - neither next or last was found');
+    }
+    return next ? nextUrl : lastUrl;
+  }
+}
