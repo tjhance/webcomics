@@ -71,32 +71,34 @@ class ComicPage {
     const timeout = setTimeout(this.attempt.bind(this), 5000);
 
     this.getInfo(dir as string, key, (result: Info) => {
-      if (this.attemptNum !== curAttempt) {
-        return;
-      }
-      clearTimeout(timeout);
+      requestAnimationFrame(() => {
+        if (this.attemptNum !== curAttempt) {
+          return;
+        }
+        clearTimeout(timeout);
 
-			if (dir === 'self') {
-				this.cur = 0;
-				// Special-case when you open up to the first comic.
-				// In that case, show the 'startmarker' to begin with.
-				if (result.type === 'comic' && result.isStart) {
-				  this.addNext({type: 'startmarker'});
-				}
-			}
-      if (dir === 'self' || dir === 'next') {
-        this.addNext(result);
-        this.maybePopFront();
-      } else {
-        this.addPrev(result);
-        this.maybePopBack();
-      }
+        if (dir === 'self') {
+          this.cur = 0;
+          // Special-case when you open up to the first comic.
+          // In that case, show the 'startmarker' to begin with.
+          if (result.type === 'comic' && result.isStart) {
+            this.addNext({type: 'startmarker'});
+          }
+        }
+        if (dir === 'self' || dir === 'next') {
+          this.addNext(result);
+          this.maybePopFront();
+        } else {
+          this.addPrev(result);
+          this.maybePopBack();
+        }
 
-      setTimeout(() => this.attempt(), 0);
+        setTimeout(() => this.attempt(), 0);
 
-      if (dir === 'self') {
-        this.updateCookies();
-      }
+        if (dir === 'self') {
+          this.updateCookies();
+        }
+      });
     });
   }
 
