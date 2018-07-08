@@ -9,7 +9,7 @@ export class gunnerkriggcourt implements Webcomic {
   }
 
   async endKey() {
-    const html = await fetchHtmlPage('http://www.gunnerkrigg.com/');
+    const html = await fetchHtmlPage('https://www.gunnerkrigg.com/');
     const match = /<img class="comic_image" src="\/comics\/(\d+).jpg">/.exec(html);
     if (match) {
       return String(Number(match[1]));

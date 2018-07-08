@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 
 export interface Webcomic {
   name: string;
@@ -16,7 +17,8 @@ export interface Webcomic {
 
 export function fetchHtmlPage(url: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
-    http.get(url, (res: any) => {
+    const use_https = (url.substring(0, 5) == 'https');
+    (use_https ? https : http).get(url, (res: any) => {
       const { statusCode } = res;
       const contentType = res.headers['content-type'];
 
