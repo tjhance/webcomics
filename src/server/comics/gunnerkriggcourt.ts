@@ -1,5 +1,7 @@
 import {Webcomic, fetchHtmlPage} from '../common';
 
+let endKeyCached: number | null = null;
+
 export class gunnerkriggcourt implements Webcomic {
   name = 'gunnerkriggcourt';
   domain = 'gunnerkrigg.com';
@@ -55,9 +57,17 @@ export class gunnerkriggcourt implements Webcomic {
         return String(newKey);
       }
     } else {
-      const endKey = await this.endKey();
       const newKey = Number(key) + 1;
+
+      if (endKeyCached !== null && newKey <= endKeyCached) {
+        return String(newKey);
+      }
+
+      const endKey = await this.endKey();
       const lastKey = Number(endKey);
+
+      endKeyCached = lastKey;
+
       if (newKey > lastKey) {
         return null;
       } else {
