@@ -107,7 +107,8 @@ function home(req: any, res: any) {
       Dr. McNinja <a href="/comicview?comic=drmcninja&index=issue-one-half-0p1">(start)</a> <br>
       Everblue <a href="/comicview?comic=everblue&index=1">(start)</a> <br>
       Gunnerkrigg Court <a href="/comicview?comic=gunnerkriggcourt&index=1">(start)</a> <br>
-      Stand Still, Stay Silent <a href="/comicview?comic=ssss&index=1">(start)</a>
+      Stand Still, Stay Silent <a href="/comicview?comic=ssss&index=1">(start)</a> <br>
+      Unsounded <a href="/comicview?comic=unsounded&index=ch01_01">(start)</a>
     </div></p>
     <div class="history">
     </div>
