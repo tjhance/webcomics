@@ -7,6 +7,7 @@ import { everblue } from './comics/everblue';
 import { gunnerkriggcourt } from './comics/gunnerkriggcourt';
 import { ssss } from './comics/ssss';
 import { unsounded } from './comics/unsounded';
+import { boywhofell } from './comics/boywhofell';
 
 const comics: {[comicName: string]: Webcomic} = {
   girlgenius: new girlgenius(),
@@ -16,6 +17,7 @@ const comics: {[comicName: string]: Webcomic} = {
   gunnerkriggcourt: new gunnerkriggcourt(),
   ssss: new ssss(),
   unsounded: new unsounded(),
+  boywhofell: new boywhofell(),
 };
 
 export async function get_info(req: any, res: any) {
