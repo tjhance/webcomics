@@ -109,7 +109,8 @@ function home(req: any, res: any) {
       Gunnerkrigg Court <a href="/comicview?comic=gunnerkriggcourt&index=1">(start)</a> <br>
       Stand Still, Stay Silent <a href="/comicview?comic=ssss&index=1">(start)</a> <br>
       Unsounded <a href="/comicview?comic=unsounded&index=ch01_01">(start)</a> <br>
-      Boy who fell <a href="/comicview?comic=boywhofell&index=ch00p00">(start)</a>
+      Boy who fell <a href="/comicview?comic=boywhofell&index=ch00p00">(start)</a> <br>
+      The Promised Neverland <a href="/comicview?comic=thepromisedneverland&index=1-1">(start)</a>
     </div></p>
     <div class="history">
     </div>

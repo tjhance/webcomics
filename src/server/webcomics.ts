@@ -8,6 +8,7 @@ import { gunnerkriggcourt } from './comics/gunnerkriggcourt';
 import { ssss } from './comics/ssss';
 import { unsounded } from './comics/unsounded';
 import { boywhofell } from './comics/boywhofell';
+import { thepromisedneverland } from './comics/thepromisedneverland';
 
 const comics: {[comicName: string]: Webcomic} = {
   girlgenius: new girlgenius(),
@@ -18,6 +19,7 @@ const comics: {[comicName: string]: Webcomic} = {
   ssss: new ssss(),
   unsounded: new unsounded(),
   boywhofell: new boywhofell(),
+  thepromisedneverland: new thepromisedneverland(),
 };
 
 export async function get_info(req: any, res: any) {
