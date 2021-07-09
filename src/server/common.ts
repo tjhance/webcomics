@@ -16,10 +16,12 @@ export interface Webcomic {
 };
 
 export function fetchHtmlPage(url: string): Promise<string> {
+  console.log(url);
   return new Promise<string>((resolve, reject) => {
     const use_https = (url.substring(0, 5) == 'https');
     (use_https ? https : http).get(url, (res: any) => {
       const { statusCode } = res;
+      console.log(statusCode);
       const contentType = res.headers['content-type'];
 
       let error;

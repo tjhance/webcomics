@@ -9,8 +9,8 @@ export class girlgenius implements Webcomic {
   }
 
   async endKey() {
-    const html = await fetchHtmlPage('http://www.girlgeniusonline.com/comic.php');
-    const url = 'http://www.girlgeniusonline.com/ggmain/strips/ggmain';
+    const html = await fetchHtmlPage('https://www.girlgeniusonline.com/comic.php');
+    const url = 'https://www.girlgeniusonline.com/ggmain/strips/ggmain';
     const start = html.indexOf(url);
     if (start === -1) {
       throw new Error('comic url not found');
@@ -49,12 +49,12 @@ export class girlgenius implements Webcomic {
     if (!key.match(/^\d+$/)) {
       throw new Error("invalid key: " + key);
     } else {
-      return 'http://www.girlgeniusonline.com/comic.php?date=' + key;
+      return 'https://www.girlgeniusonline.com/comic.php?date=' + key;
     }
   }
 
   async keyToImgUrls(key: string) {
-    const html = await fetchHtmlPage('http://www.girlgeniusonline.com/comic.php?date=' + key);
+    const html = await fetchHtmlPage('https://www.girlgeniusonline.com/comic.php?date=' + key);
     const regex =
         /[Ss][Rr][Cc]=['"](http:\/\/www\.girlgeniusonline\.com\/ggmain\/strips\/ggmain[0-9a-zA-Z]+.jpg)['"]/g;
     const match1 = regex.exec(html);
